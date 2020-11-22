@@ -294,31 +294,36 @@ describe('Genymotion-cloud driver', () => {
       return new InstanceLifecycleService();
     }
 
-    const assertablePendingPromise = () => {
+    const anAssertablePendingPromise = () => {
       let promiseAck = jest.fn();
       const promise = new Promise(resolve => setTimeout(resolve, 1)).then(promiseAck);
       promise.assertResolved = () => expect(promiseAck).toHaveBeenCalled();
       return promise;
     };
 
+    const aPendingDevice = (name, uuid) => ({ name, uuid });
+
     it('should kill all devices preregistered for clean-up', async () => {
-      const killPromise1 = assertablePendingPromise();
-      const killPromise2 = assertablePendingPromise();
+      const killPromise1 = anAssertablePendingPromise();
+      const killPromise2 = anAssertablePendingPromise();
 
       const instanceLifecycleService = anInstanceLifecycleService();
       instanceLifecycleService.deleteInstance
         .mockReturnValueOnce(killPromise1)
         .mockReturnValueOnce(killPromise2);
 
-      const deviceUUIDs = ['device1-uuid', 'device2-uuid'];
-      deviceCleanupRegistry.readRegisteredDevices.mockResolvedValue(deviceUUIDs);
+      const devices = [
+        aPendingDevice('device1', 'uuid1'),
+        aPendingDevice('device2', 'uuid2'),
+      ];
+      deviceCleanupRegistry.readRegisteredDevices.mockResolvedValue(devices);
 
       await GenyCloudDriver.globalCleanup(instanceLifecycleService);
 
       killPromise1.assertResolved();
       killPromise2.assertResolved();
-      expect(instanceLifecycleService.deleteInstance).toHaveBeenCalledWith(deviceUUIDs[0]);
-      expect(instanceLifecycleService.deleteInstance).toHaveBeenCalledWith(deviceUUIDs[1]);
+      expect(instanceLifecycleService.deleteInstance).toHaveBeenCalledWith('uuid1');
+      expect(instanceLifecycleService.deleteInstance).toHaveBeenCalledWith('uuid2');
     });
 
     it('should fallback to a default lifecycle-service', async () => {
@@ -333,22 +338,26 @@ describe('Genymotion-cloud driver', () => {
         .mockResolvedValueOnce(anInstance())
         .mockRejectedValueOnce(new Error('mock-error2'));
 
-      const deviceUUIDs = ['failing-uuid1', 'nonfailing-uuid', 'failing-uuid2'];
-      deviceCleanupRegistry.readRegisteredDevices.mockResolvedValue(deviceUUIDs);
+      const devices = [
+        aPendingDevice('failing1', 'uuid1'),
+        aPendingDevice('nonfailing', 'uuid'),
+        aPendingDevice('failing2', 'uuid2'),
+      ];
+      deviceCleanupRegistry.readRegisteredDevices.mockResolvedValue(devices);
 
       await GenyCloudDriver.globalCleanup(instanceLifecycleService);
 
       expect(logger.warn).toHaveBeenCalledWith({ event: 'GENYCLOUD_TEARDOWN' }, 'WARNING! Detected a Genymotion cloud instance leakage, for the following instances:');
-      expect(logger.warn).toHaveBeenCalledWith({ event: 'GENYCLOUD_TEARDOWN' }, expect.stringMatching(/failing-uuid1:.*mock-error1/));
-      expect(logger.warn).toHaveBeenCalledWith({ event: 'GENYCLOUD_TEARDOWN' }, expect.stringMatching(/failing-uuid2:.*mock-error2/));
+      expect(logger.warn).toHaveBeenCalledWith({ event: 'GENYCLOUD_TEARDOWN' }, expect.stringMatching(/failing1 \(uuid1\): .*mock-error1/));
+      expect(logger.warn).toHaveBeenCalledWith({ event: 'GENYCLOUD_TEARDOWN' }, expect.stringMatching(/failing2 \(uuid2\): .*mock-error2/));
     });
 
     it('should not warn of cleanup rejects if all went well', async () => {
       const instanceLifecycleService = anInstanceLifecycleService();
       instanceLifecycleService.deleteInstance.mockResolvedValue(anInstance);
 
-      const deviceUUIDs = ['device-uuid1'];
-      deviceCleanupRegistry.readRegisteredDevices.mockResolvedValue(deviceUUIDs);
+      const devices = [aPendingDevice('device', 'uuid1')];
+      deviceCleanupRegistry.readRegisteredDevices.mockResolvedValue(devices);
 
       await GenyCloudDriver.globalCleanup(instanceLifecycleService);
 
