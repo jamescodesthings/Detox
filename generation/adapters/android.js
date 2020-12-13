@@ -14,7 +14,9 @@ const typeCheckInterfaces = {
   ViewAction: null, // there are optional view actions
   ViewInteraction: null, // there are optional view actions
   WebInteraction: null,
-  Atom: null
+  Atom: null,
+  WebElement: null,
+  'Atom<List<ElementReference>>': isArray
 };
 
 const contentSanitizersForFunction = {
@@ -74,7 +76,9 @@ module.exports = generator({
     'ViewAction',
     'ViewInteraction',
     'WebInteraction',
-    'Atom'
+    'Atom',
+    'WebElement',
+    'Atom<List<ElementReference>>'
   ],
   renameTypesMap: {
     int: 'Integer', // TODO: add test

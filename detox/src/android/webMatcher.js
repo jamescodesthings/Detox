@@ -54,27 +54,6 @@ class PartialLinkTextMatcher extends WebMatcher {
   }
 }
 
-class ActiveElementMatcher extends WebMatcher {
-  constructor(value) {
-    super();
-    this._call = invoke.callDirectly(DetoxWebMatcherApi.matcherForActiveElement());
-  }
-}
-
-class FrameByIndexMatcher extends WebMatcher {
-  constructor(index) {
-    super();
-    this._call = invoke.callDirectly(DetoxWebMatcherApi.matcherForFrameByIndex(index));
-  }
-}
-
-class FrameByIdOrNameMatcher extends WebMatcher {
-  constructor(idOrName) {
-    super();
-    this._call = invoke.callDirectly(DetoxWebMatcherApi.matcherForFrameByIdOrName(idOrName));
-  }
-}
-
 module.exports = {
   IdMatcher,
 };
