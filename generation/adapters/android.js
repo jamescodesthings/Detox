@@ -16,7 +16,7 @@ const typeCheckInterfaces = {
   WebInteraction: null,
   Atom: null,
   WebElement: null,
-  'Atom<List<ElementReference>>': isArray
+  'Atom<List<ElementReference>>': null
 };
 
 const contentSanitizersForFunction = {
@@ -85,7 +85,8 @@ module.exports = generator({
     double: 'Double',
     ViewInteraction: 'Invocation',
     WebInteraction: 'Invocation',
-    Atom: 'Invocation'
+    Atom: 'Invocation',
+    'Atom<List<ElementReference>>': 'Invocation'
   },
   classValue: ({ package: pkg, name }) => `${pkg}.${name}`
 });

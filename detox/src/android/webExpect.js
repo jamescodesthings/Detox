@@ -1,5 +1,8 @@
 const invoke = require('../invoke');
 const EspressoWebDetoxApi = require('./espressoapi/web/EspressoWebDetox');
+const WebViewElementApi = require('./espressoapi/web/WebViewElement');
+const WebElementApi = require('./espressoapi/web/WebElement');
+const WebExpectElementApi = require('./espressoapi/web/WebExpectElement');
 const {
   IdMatcher
 } = require('./webMatcher');
@@ -21,82 +24,76 @@ class WebInteraction {
 }
 
 class ActionInteraction extends WebInteraction {
-  constructor(invocationManager, element, action) {
+  constructor(invocationManager, action) {
     super(invocationManager);
-    this._call = EspressoWebDetoxApi.tap(call(element._call), action._call.value);
+    this._call = action._call;
   }
 }
 
 class WebAction {
+
 }
 
 class WebTapAction extends WebAction {
-  constructor() {
+  constructor(element) {
     super();
-    this._call = invoke.callDirectly(DetoxWebActionsApi.click());
-  }
-}
-
-class WebTypeTextAction extends WebAction {
-  constructor(text) {
-    super();
-    this._call = invoke.callDirectly(DetoxWebActionsApi.typeText(text));
+    this._call = WebElementApi.tap(element._call);
   }
 }
 
 class WebReplaceTextAction extends WebAction {
-  constructor(text) {
+  constructor(element, text) {
     super();
-    this._call = invoke.callDirectly(DetoxWebActionsApi.replaceText(text));
+    this._call = WebElementApi.replaceText(element._call, text);
   }
 }
 
 class WebClearTextAction extends WebAction {
-  constructor() {
+  constructor(element) {
     super();
-    this._call = invoke.callDirectly(DetoxWebActionsApi.clearText());
+    this._call = WebElementApi.clearText(element._call);
   }
 }
 
 class WebScrollToViewAction extends WebAction {
-  constructor() {
+  constructor(element) {
     super();
-    this._call = invoke.callDirectly(DetoxWebActionsApi.scrollToView());
+    this._call = WebElementApi.scrollToView(element._call);
   }
 }
 
 class WebGetTextAction extends WebAction {
-  constructor() {
+  constructor(element) {
     super();
-    this._call = invoke.callDirectly(DetoxWebActionsApi.getText());
+    this._call = WebElementApi.getText(element._call);
   }
 }
 
 class WebRunScriptAction extends WebAction {
-  constructor(script) {
+  constructor(element, script) {
     super();
-    this._call = invoke.callDirectly(DetoxWebActionsApi.runScript(script));
+    this._call = WebElementApi.runScript(element._call, script);
   }
 }
 
 class WebRunScriptWithArgsAction extends WebAction {
-  constructor(script, args) {
+  constructor(element, script, args) {
     super();
-    this._call = invoke.callDirectly(DetoxWebActionsApi.runScriptWithArgs(script, args));
+    this._call = WebElementApi.runScriptWithArgs(element._call, script, args);
   }
 }
 
 class WebGetCurrentUrlAction extends WebAction {
-  constructor(script, args) {
+  constructor(element) {
     super();
-    this._call = invoke.callDirectly(DetoxWebActionsApi.getCurrentUrl());
+    this._call = WebElementApi.getCurrentUrl(element._call);
   }
 }
 
 class WebGetTitleAction extends WebAction {
-  constructor() {
+  constructor(element) {
     super();
-    this._call = invoke.callDirectly(DetoxWebActionsApi.getTitle());
+    this._call = WebElementApi.getTitle(element._call);
   }
 }
 
@@ -127,63 +124,63 @@ class WebViewElement {
     this._invocationManager = invocationManager;
     this._emitter = emitter;
     if (matcher !== undefined) {
-      this._call = EspressoWebDetoxApi.getWebView(matcher._call);
+      this._call = invoke.callDirectly(EspressoWebDetoxApi.getWebView(matcher._call));
     }
-    this._call = EspressoWebDetoxApi.getWebView();
+    this._call = invoke.callDirectly(EspressoWebDetoxApi.getWebView());
 
     this.element = this.element.bind(this);
   }
 
   element(webMatcher, index = 0) {
-    return new WebElement(this._invocationManager, webMatcher, index)
+    return new WebElement(this._invocationManager, this, webMatcher, index)
   }
 }
 
 class WebElement {
-
-  constructor(invocationManager, matcher, index) {
+  constructor(invocationManager, webviewElement, matcher, index) {
     this._invocationManager = invocationManager;
-    this._call = EspressoWebDetoxApi.element(matcher._call.value, index);
+    this._call = invoke.callDirectly(WebViewElementApi.element(call(webviewElement._call), matcher._call.value, index));
   }
 
   async tap() {
-    return await new ActionInteraction(this._invocationManager, this, new WebTapAction()).execute();
+    return await new ActionInteraction(this._invocationManager, new WebTapAction(this)).execute();
   }
 
   async typeText(text) {
-    return await new ActionInteraction(this._invocationManager, this, new WebTypeTextAction(text)).execute();
+    
+    // return await new ActionInteraction(this._invocationManager, new WebTypeTextAction(this, text)).execute();
   }
 
   async replaceText(text) {
-    return await new ActionInteraction(this._invocationManager, this, new WebReplaceTextAction(text)).execute();
+    return await new ActionInteraction(this._invocationManager,  new WebReplaceTextAction(this, text)).execute();
   }
 
   async clearText() {
-    return await new ActionInteraction(this._invocationManager, this, new WebClearTextAction()).execute();
+    return await new ActionInteraction(this._invocationManager,  new WebClearTextAction(this)).execute();
   }
 
   async scrollToView() {
-    return await new ActionInteraction(this._invocationManager, this, new WebScrollToViewAction()).execute();
+    return await new ActionInteraction(this._invocationManager,  new WebScrollToViewAction(this)).execute();
   }
 
   async getText() {
-    return await new ActionInteraction(this._invocationManager, this, new WebGetTextAction()).execute();
+    return await new ActionInteraction(this._invocationManager,  new WebGetTextAction(this)).execute();
   }
 
   async runScript(script) {
-    return await new ActionInteraction(this._invocationManager, this, new WebRunScriptAction(script)).execute();
+    return await new ActionInteraction(this._invocationManager,  new WebRunScriptAction(this, script)).execute();
   }
 
   async runScriptWithArgs(script, args) {
-    return await new ActionInteraction(this._invocationManager, this, new WebRunScriptWithArgsAction(script, args)).execute();
+    return await new ActionInteraction(this._invocationManager,  new WebRunScriptWithArgsAction(this, script, args)).execute();
   }
 
   async getCurrentUrl() {
-    return await new ActionInteraction(this._invocationManager, this, new WebGetCurrentUrlAction()).execute();
+    return await new ActionInteraction(this._invocationManager,  new WebGetCurrentUrlAction(this)).execute();
   }
 
   async getTitle() {
-    return await new ActionInteraction(this._invocationManager, this, new WebGetTitleAction()).execute();
+    return await new ActionInteraction(this._invocationManager,  new WebGetTitleAction(this)).execute();
   }
 }
 

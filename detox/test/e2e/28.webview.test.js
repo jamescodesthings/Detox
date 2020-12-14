@@ -22,8 +22,7 @@ describe('WebView', () => {
 
     //detox web
     const webview = await web.getWebView();
-    const textInput = await webview.element(web.by.id('id_not_found'));
-
+    const textInput = await webview.element(web.by.id('textInput'));
     await textInput.tap();
   });
 
