@@ -21,7 +21,6 @@ describe('webExpect', () => {
 
   it('test api', async () => {
       const output = await e.getWebView(e.by.id('webview_1')).element(e.by.id('textInput')).tap();
-      console.log(output);
   });
 });
 
